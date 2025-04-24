@@ -4,7 +4,7 @@ set -e
 cd $(dirname $0)
 CMD=$1
 
-# Revision of the data sources 
+# Revision of the data sources
 REV=b99e2eed84917d13ccb28a1a7090703d4eda76d1
 shift
 
@@ -17,6 +17,33 @@ case "$CMD" in
     ;;
     install-chiptool)
         cargo install --git https://github.com/embassy-rs/chiptool
+    ;;
+    extract-all)
+        peri=$1
+        shift
+        echo $@
+
+        rm -rf tmp/$peri
+        mkdir -p tmp/$peri
+
+        for f in $(ls sources/svd); do
+          if [[ $f == MSPM0*.svd ]]; then
+            f=${f#"MSPM0"}
+            f=${f%".svd"}
+            echo -n processing $f ...
+            if chiptool extract-peripheral --svd sources/svd/MSPM0$f.svd --peripheral $peri $@ >tmp/$peri/$f.yaml 2>tmp/$peri/$f.err; then
+              rm tmp/$peri/$f.err
+              echo OK
+            else
+              if grep -q 'peripheral not found' tmp/$peri/$f.err; then
+                echo No Peripheral
+              else
+                echo OTHER FAILURE
+              fi
+              rm tmp/$peri/$f.yaml
+            fi
+          fi
+        done
     ;;
     gen)
         rm -rf build/data
