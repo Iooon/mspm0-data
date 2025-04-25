@@ -20,8 +20,14 @@ case "$CMD" in
     ;;
     extract-all)
         peri=$1
+        trans=$2
         shift
         echo $@
+
+        if [ ! -z "$trans" ]; then
+          trans="--transform $trans"
+          echo $trans
+        fi
 
         rm -rf tmp/$peri
         mkdir -p tmp/$peri
@@ -31,7 +37,7 @@ case "$CMD" in
             f=${f#"MSPM0"}
             f=${f%".svd"}
             echo -n processing $f ...
-            if chiptool extract-peripheral --svd sources/svd/MSPM0$f.svd --peripheral $peri $@ >tmp/$peri/$f.yaml 2>tmp/$peri/$f.err; then
+            if chiptool extract-peripheral --svd sources/svd/MSPM0$f.svd $trans --peripheral $peri >tmp/$peri/$f.yaml 2>tmp/$peri/$f.err; then
               rm tmp/$peri/$f.err
               echo OK
             else
